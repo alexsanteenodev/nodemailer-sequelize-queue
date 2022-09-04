@@ -1,27 +1,11 @@
 import NodemailerSequelizeQueue from '../index'
 import dotenv from 'dotenv'
 dotenv.config()
-import path from 'path'
 
-// Use google smtp key
-const googleKey = process.env.smtp_google_key
-  ? require(path.join(process.cwd(), `./${process.env.smtp_google_key}`))
-  : {}
-
-const auth =
-  process.env.smtp_host === 'smtp.gmail.com'
-    ? //Use google smtp
-      {
-        type: 'OAuth2',
-        user: process.env.smtp_user,
-        serviceClient: googleKey.client_id,
-        privateKey: googleKey.private_key,
-      }
-    : //Use default smtp
-      {
-        user: process.env.smtp_user,
-        pass: process.env.smtp_pass,
-      }
+const auth = {
+  user: process.env.smtp_user,
+  pass: process.env.smtp_pass,
+}
 
 // See https://www.npmjs.com/package/nodemailer for more options
 const smtpCreds = {
@@ -61,4 +45,13 @@ queue.queueMail({
   email_to: 'alexsanteeno@gmail.com',
   subject: 'test subject',
   html: 'test message',
+
+  attachments: [
+    {
+      // Not required (see Nodemailer filename prop)
+      filename: 'file.jpg',
+      // Local or remote url (see Nodemailer path prop)
+      path: 'https://picsum.photos/id/237/200/300',
+    },
+  ],
 })

@@ -1,4 +1,5 @@
 import { Sequelize, DataTypes, ModelStatic, Model, Optional } from 'sequelize'
+import { Attachment } from './Mailer'
 
 export class NsqMailQueue extends Model implements IQueueModel {
   declare id: number
@@ -65,7 +66,7 @@ export type AddQueueModelAttributes = {
   email_to: string
   subject: string
   html: string
-  attachments?: any
+  attachments?: Attachment[]
 }
 
 export type QueueModelAttributes = {

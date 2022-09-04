@@ -36,8 +36,6 @@ const dbCredentials = {
 const smtpCreds = {
   host: process.env.smtp_host,
   port: process.env.smtp_port ? process.env.smtp_port : 465,
-  secure: true,
-  auth: auth,
 }
 
 const queue = new NodemailerSequelizeQueue(
@@ -62,7 +60,13 @@ queue.queueMail({
   email_to: 'test@gmail.com',
   subject: 'test subject',
   html: 'test message',
-  attachments:[]
+  attachments: [
+    {
+      // Not required (see Nodemailer filename prop)
+      filename: 'file.jpg',
+      // Local or remote url (see Nodemailer path prop)
+      path: 'https://picsum.photos/id/237/200/300',
+    },
 })
 ```
 
