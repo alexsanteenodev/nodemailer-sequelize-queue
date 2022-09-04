@@ -18,6 +18,8 @@ yarn add nodemailer-sequelize-queue
 
 1. Create NodemailerSequelizeQueue instance
 ```console
+import NodemailerSequelizeQueue from 'nodemailer-sequelize-queue'
+
 const dbCredentials = {
   // See https://www.npmjs.com/package/sequelize for more options
   config: {
