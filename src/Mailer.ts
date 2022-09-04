@@ -20,10 +20,6 @@ export interface IMailer {
   sendMail(message: Message): Promise<SentMessageInfo>
 }
 
-type Headers =
-  | { [key: string]: string | string[] | { prepared: boolean; value: string } }
-  | Array<{ key: string; value: string }>
-
 export interface Attachment {
   /** filename to be reported as the name of the attached file, use of unicode is allowed. If you do not want to use a filename, set this value as false, otherwise a filename is generated automatically */
   filename?: string | false | undefined
