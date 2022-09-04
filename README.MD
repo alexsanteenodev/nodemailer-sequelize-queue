@@ -4,7 +4,7 @@
 
 ## Getting Started
 
-1. Install nodemailer-sequelize-queue using npm:
+Install nodemailer-sequelize-queue using npm:
 
 ```console
 npm i nodemailer-sequelize-queue
@@ -14,7 +14,9 @@ or use yarn
 yarn add nodemailer-sequelize-queue
 ```
 
-2. Create NodemailerSequelizeQueue instance
+## Usage 
+
+1. Create NodemailerSequelizeQueue instance
 ```console
 const dbCredentials = {
   // See https://www.npmjs.com/package/sequelize for more options
@@ -47,11 +49,11 @@ const queue = new NodemailerSequelizeQueue(
   }
 )
 ```
-3. Run cron schedule for sending mail (Only one time in root of the system)
+2. Run cron schedule for sending mail (Only one time in root of the system)
 ```console
 queue.initScheduler()
 ```
-4. Add mail to queue
+3. Add mail to queue
 ```console
 queue.queueMail({
   email_from: 'test@gmail.com',
