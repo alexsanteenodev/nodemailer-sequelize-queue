@@ -41,8 +41,8 @@ queue.initScheduler()
 
 // Add mail to queue
 queue.queueMail({
-  email_from: 'alexsanteeno@gmail.com',
-  email_to: 'alexsanteeno@gmail.com',
+  email_from: 'test@gmail.com',
+  email_to: 'test@gmail.com',
   subject: 'test subject',
   html: 'test message',
 
