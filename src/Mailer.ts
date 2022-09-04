@@ -1,5 +1,4 @@
 import nodemailer, { Transporter, SentMessageInfo } from 'nodemailer'
-import { Readable } from 'stream'
 import { Url } from 'url'
 
 export default class Mailer implements IMailer {
