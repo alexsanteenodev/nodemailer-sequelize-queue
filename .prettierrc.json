@@ -1,0 +1,20 @@
+{
+  "printWidth": 100,
+  "tabWidth": 2,
+  "semi": false,
+  "singleQuote": true,
+  "bracketSameLine": false,
+  "arrowParens": "always",
+  "endOfLine": "auto",
+  "proseWrap": "preserve",
+  "quoteProps": "as-needed",
+  "useTabs": false,
+  "overrides": [
+    {
+      "files": ".json",
+      "options": {
+        "parser": "json"
+      }
+    }
+  ]
+}
