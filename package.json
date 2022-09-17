@@ -33,7 +33,12 @@
     "mail",
     "queue",
     "mail queue",
-    "schedule"
+    "schedule",
+    "typescript",
+    "javascript",
+    "node.js",
+    "express.js",
+    "email"
   ],
   "devDependencies": {
     "@types/node": "^10.17.60",

@@ -67,6 +67,7 @@ queue.queueMail({
       // Local or remote url (see Nodemailer path prop)
       path: 'https://picsum.photos/id/237/200/300',
     },
+    ]
 })
 ```
 
