@@ -1,6 +1,8 @@
 # Nodemailer sequelize queue
-### This package allows to queue email and process it later by schedule using [Nodemailer](https://www.npmjs.com/package/nodemailer) for sending mails, [Sequelize](https://www.npmjs.com/package/sequelize) for save queue to database and [Node cron](https://www.npmjs.com/package/sequelize) for scheduling.
 
+[Npm package](https://www.npmjs.com/package/nodemailer-sequelize-queue)
+
+### This package allows to queue email and process it later by schedule using [Nodemailer](https://www.npmjs.com/package/nodemailer) for sending mails, [Sequelize](https://www.npmjs.com/package/sequelize) for save queue to database and [Node cron](https://www.npmjs.com/package/sequelize) for scheduling.
 
 ## Getting Started
 
@@ -9,14 +11,17 @@ Install nodemailer-sequelize-queue using npm:
 ```console
 npm i nodemailer-sequelize-queue
 ```
+
 or use yarn
+
 ```console
 yarn add nodemailer-sequelize-queue
 ```
 
-## Usage 
+## Usage
 
 1. Create NodemailerSequelizeQueue instance
+
 ```console
 import NodemailerSequelizeQueue from 'nodemailer-sequelize-queue'
 
@@ -49,11 +54,15 @@ const queue = new NodemailerSequelizeQueue(
   }
 )
 ```
+
 2. Run cron schedule for sending mail (Only one time in root of the system)
+
 ```console
 queue.initScheduler()
 ```
+
 3. Add mail to queue
+
 ```console
 queue.queueMail({
   email_from: 'test@gmail.com',
