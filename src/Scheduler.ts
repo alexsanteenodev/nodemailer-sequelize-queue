@@ -8,6 +8,7 @@ class Scheduler implements IScheduler {
   expression: string
   maxAttemps: number
   mailer: IMailer
+  logging: boolean
 
   private queueModel: IQueueModelStatic
 
@@ -15,13 +16,15 @@ class Scheduler implements IScheduler {
     smtpCredentials: any,
     queueModel: IQueueModelStatic,
     expression = '0 */1 * * *',
-    maxAttemps = -1
+    maxAttemps = -1,
+    logging = false
   ) {
     if (!isCronValid(expression)) {
       throw new Error('Cron expression is invalid')
     }
     this.expression = expression
     this.maxAttemps = maxAttemps
+    this.logging = logging
     this.runJobs()
     this.queueModel = queueModel
 
@@ -29,6 +32,8 @@ class Scheduler implements IScheduler {
   }
 
   private async runJobs() {
+    this.log(`Initialising cron schedule ${this.expression}`)
+
     cron.schedule(this.expression, async () => {
       try {
         this.processQueueMails()
@@ -51,7 +56,7 @@ class Scheduler implements IScheduler {
       }
     }
     const mails = await this.queueModel.findAll(options)
-
+    this.log(`Sending queued mail, number: ${mails}`)
     for (const mail of mails) {
       this.sendQueuedMail(mail as NsqMailQueue)
     }
@@ -86,12 +91,19 @@ class Scheduler implements IScheduler {
     }
     return message
   }
+
+  private log(message: string, level = 'info'): void {
+    if (this.logging) {
+      logger.log(level, message)
+    }
+  }
 }
 
 export interface IScheduler {
   expression: string
   maxAttemps: number
   mailer: IMailer
+  logging: boolean
 }
 
 function isCronValid(freq: string): boolean {

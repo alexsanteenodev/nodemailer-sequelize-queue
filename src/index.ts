@@ -38,7 +38,8 @@ export default class NodemailerSequelizeQueue implements INodemailerSequelizeQue
       this.smtpCredentials,
       this.queueModel,
       this.options.expression,
-      this.options.maxAttempts
+      this.options.maxAttempts,
+      this.options.logging
     )
   }
 
@@ -88,4 +89,5 @@ export type DbCongifInstance = {
 export type Options = {
   maxAttempts?: number
   expression?: string
+  logging: boolean
 }

@@ -14,7 +14,12 @@
     "prepublishOnly": "npm run eslint",
     "preversion": "npm run eslint",
     "version": "npm run format && git add -A src",
-    "postversion": "git push --set-upstream origin master && git push --set-upstream origin master --tags"
+    "postversion": "git push --set-upstream origin master && git push --set-upstream origin master --tags",
+    "commit:example": "echo 'npm run commit -- 'v.1.0.1: Fixes'",
+    "commit:patch": "npm version patch --no-git-tag-version --force",
+    "commit:minor": "npm version minor --no-git-tag-version --force",
+    "commit:major": "npm version major --no-git-tag-version --force",
+    "commit": "git add . && git commit -m "
   },
   "repository": {
     "type": "git",
