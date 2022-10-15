@@ -89,5 +89,5 @@ export type DbCongifInstance = {
 export type Options = {
   maxAttempts?: number
   expression?: string
-  logging: boolean
+  logging?: boolean
 }
