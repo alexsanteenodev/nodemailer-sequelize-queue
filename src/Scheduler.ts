@@ -56,7 +56,7 @@ class Scheduler implements IScheduler {
       }
     }
     const mails = await this.queueModel.findAll(options)
-    this.log(`Sending queued mail, number: ${mails}`)
+    this.log(`Sending queued mail, number: ${mails?.length}`)
     for (const mail of mails) {
       this.sendQueuedMail(mail as NsqMailQueue)
     }
