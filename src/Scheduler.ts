@@ -26,6 +26,7 @@ class Scheduler implements IScheduler {
     this.maxAttemps = maxAttemps
     this.logging = logging
     this.runJobs()
+
     this.queueModel = queueModel
 
     this.mailer = new Mailer(smtpCredentials)
@@ -56,7 +57,19 @@ class Scheduler implements IScheduler {
       }
     }
     const mails = await this.queueModel.findAll(options)
+    // Remove from queue(prevents duplicate sends with multiple workers)
+
+    await this.queueModel.destroy({
+      where: {
+        id: {
+          [Op.in]: mails.map((m: any) => m.id),
+        },
+      },
+    })
+
     this.log(`Sending queued mail, number: ${mails?.length}`)
+
+    console.log('mails', mails.length)
     for (const mail of mails) {
       this.sendQueuedMail(mail as NsqMailQueue)
     }
@@ -75,9 +88,14 @@ class Scheduler implements IScheduler {
     } catch (e) {
       logger.error(`Error sending mail to ${model.email_to}`, model)
 
-      model.update({
+      this.queueModel.create({
+        email_from: model.email_from,
+        email_to: model.email_to,
+        subject: model.subject,
+        html: model.html,
+        attachments: model.attachments,
+        attempts: model.attempts + 1,
         last_error: JSON.stringify(e),
-        attempts: model.attempts++,
       })
     }
   }
