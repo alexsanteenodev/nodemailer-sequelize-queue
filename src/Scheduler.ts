@@ -9,6 +9,7 @@ class Scheduler implements IScheduler {
   maxAttemps: number
   mailer: IMailer
   logging: boolean
+  lockType?: LockType
 
   private queueModel: IQueueModelStatic
 
@@ -17,7 +18,8 @@ class Scheduler implements IScheduler {
     queueModel: IQueueModelStatic,
     expression = '0 */1 * * *',
     maxAttemps = -1,
-    logging = false
+    logging = false,
+    lockType?: LockType
   ) {
     if (!isCronValid(expression)) {
       throw new Error('Cron expression is invalid')
@@ -30,52 +32,60 @@ class Scheduler implements IScheduler {
     this.queueModel = queueModel
 
     this.mailer = new Mailer(smtpCredentials)
+    this.lockType = lockType
   }
 
   private async runJobs() {
     this.log(`Initialising cron schedule ${this.expression}`)
 
     cron.schedule(this.expression, async () => {
-      try {
-        this.processQueueMails()
-      } catch (e: any) {
+      this.processQueueMails().catch((e) => {
         logger.error('Cron failed', {
           message: e.message,
           stack: e.stack,
         })
-      }
+      })
     })
   }
 
   private async processQueueMails(): Promise<void> {
     const options: any = {}
-    if (this.maxAttemps > 0) {
-      options.where = {
-        attempts: {
-          [Op.lt]: this.maxAttemps,
-        },
+    const transaction = await this.queueModel.sequelize.transaction()
+    try {
+      if (this.maxAttemps > 0) {
+        options.where = {
+          attempts: {
+            [Op.lt]: this.maxAttemps,
+          },
+          transaction,
+          lock: true,
+        }
       }
-    }
-    const mails = await this.queueModel.findAll(options)
-    // Remove from queue(prevents duplicate sends with multiple workers)
+      const mails = await this.queueModel.findAll(options)
+      // Remove from queue(prevents duplicate sends with multiple workers)
+      this.log(`Sending queued mail, number: ${mails?.length}`)
 
-    await this.queueModel.destroy({
-      where: {
-        id: {
-          [Op.in]: mails.map((m: any) => m.id),
+      const models = []
+      for (const mail of mails) {
+        const model = this.sendQueuedMail(mail as NsqMailQueue)
+        models.push(model)
+      }
+      await transaction.commit()
+
+      const results = await Promise.all(models)
+      const ids = results.map((r) => r.id)
+      await this.queueModel.destroy({
+        where: {
+          id: ids,
         },
-      },
-    })
-
-    this.log(`Sending queued mail, number: ${mails?.length}`)
-
-    console.log('mails', mails.length)
-    for (const mail of mails) {
-      this.sendQueuedMail(mail as NsqMailQueue)
+      })
+    } catch (e) {
+      await transaction.rollback()
+      throw e
     }
   }
 
-  private async sendQueuedMail(model: NsqMailQueue): Promise<void> {
+  private async sendQueuedMail(model: NsqMailQueue): Promise<NsqMailQueue> {
     try {
       const message = this.composeMailFromModel(model)
       const result = await this.mailer.sendMail(message)
@@ -84,19 +94,10 @@ class Scheduler implements IScheduler {
       }
 
       // Remove from queue
-      await model.destroy()
+      return model
     } catch (e) {
       logger.error(`Error sending mail to ${model.email_to}`, model)
-
-      this.queueModel.create({
-        email_from: model.email_from,
-        email_to: model.email_to,
-        subject: model.subject,
-        html: model.html,
-        attachments: model.attachments,
-        attempts: model.attempts + 1,
-        last_error: JSON.stringify(e),
-      })
+      return model
     }
   }
 
@@ -130,5 +131,7 @@ function isCronValid(freq: string): boolean {
   )
   return cronregex.test(freq)
 }
+
+export type LockType = 'transaction'
 
 export default Scheduler
