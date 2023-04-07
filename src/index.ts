@@ -6,6 +6,7 @@ export default class NodemailerSequelizeQueue implements INodemailerSequelizeQue
   private queueModel: IQueueModelStatic
   private sequelize: Sequelize
   private dbInisializated: boolean
+  private scheduled: boolean
   private smtpCredentials: any
   private options: Options
 
@@ -13,6 +14,7 @@ export default class NodemailerSequelizeQueue implements INodemailerSequelizeQue
     this.initDatabase(dbConfigInstance)
     this.smtpCredentials = smtpCredentials
     this.options = options
+    this.scheduled = false
   }
 
   private async initDatabase(dbConfigInstance: DbCongifInstance): Promise<void> {
@@ -34,6 +36,12 @@ export default class NodemailerSequelizeQueue implements INodemailerSequelizeQue
     if (!this.dbInisializated) {
       await this.initModels()
     }
+
+    if (this.scheduled) {
+      return
+    }
+
+    this.scheduled = true
     new Scheduler(
       this.smtpCredentials,
       this.queueModel,
@@ -48,6 +56,7 @@ export default class NodemailerSequelizeQueue implements INodemailerSequelizeQue
 
     // Creates table if not exist
     await this.queueModel.sync({
+      // eslint-disable-next-line no-console
       logging: console.log,
       force: false,
     })

@@ -1,15 +1,16 @@
-import cron from 'node-cron'
+// import cron from 'node-cron'
+import { CronJob } from 'cron'
 import { Op } from 'sequelize'
 import Mailer, { IMailer, Message } from './Mailer'
 import { IQueueModelStatic, NsqMailQueue } from './QueueModel'
 import logger from './utils/logger'
+import { generateRandom } from './utils/generateRandom'
 
 class Scheduler implements IScheduler {
   expression: string
   maxAttemps: number
   mailer: IMailer
   logging: boolean
-  lockType?: LockType
 
   private queueModel: IQueueModelStatic
 
@@ -18,8 +19,7 @@ class Scheduler implements IScheduler {
     queueModel: IQueueModelStatic,
     expression = '0 */1 * * *',
     maxAttemps = -1,
-    logging = false,
-    lockType?: LockType
+    logging = false
   ) {
     if (!isCronValid(expression)) {
       throw new Error('Cron expression is invalid')
@@ -27,58 +27,66 @@ class Scheduler implements IScheduler {
     this.expression = expression
     this.maxAttemps = maxAttemps
     this.logging = logging
+
     this.runJobs()
 
     this.queueModel = queueModel
 
     this.mailer = new Mailer(smtpCredentials)
-    this.lockType = lockType
   }
 
   private async runJobs() {
     this.log(`Initialising cron schedule ${this.expression}`)
 
-    cron.schedule(this.expression, async () => {
-      this.processQueueMails().catch((e) => {
+    await new Promise((resolve) => setTimeout(resolve, generateRandom(500, 2500)))
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const self = this
+    const job = new CronJob(this.expression, function () {
+      self.processQueueMails().catch((e) => {
         logger.error('Cron failed', {
           message: e.message,
           stack: e.stack,
         })
       })
     })
+    job.start()
+    // cron.schedule(this.expression, async () => {
+    //   // if scheduler runing
+
+    //   this.processQueueMails().catch((e) => {
+    //     logger.error('Cron failed', {
+    //       message: e.message,
+    //       stack: e.stack,
+    //     })
+    //   })
+    // })
   }
 
   private async processQueueMails(): Promise<void> {
-    const options: any = {}
     const transaction = await this.queueModel.sequelize.transaction()
+    const options: any = {
+      transaction: transaction,
+      lock: true,
+    }
     try {
       if (this.maxAttemps > 0) {
         options.where = {
           attempts: {
             [Op.lt]: this.maxAttemps,
           },
-          transaction,
-          lock: true,
         }
       }
       const mails = await this.queueModel.findAll(options)
       // Remove from queue(prevents duplicate sends with multiple workers)
-      this.log(`Sending queued mail, number: ${mails?.length}`)
 
       const models = []
       for (const mail of mails) {
         const model = this.sendQueuedMail(mail as NsqMailQueue)
         models.push(model)
       }
-      await transaction.commit()
 
-      const results = await Promise.all(models)
-      const ids = results.map((r) => r.id)
-      await this.queueModel.destroy({
-        where: {
-          id: ids,
-        },
-      })
+      await Promise.all(models)
+      await transaction.commit()
     } catch (e) {
       await transaction.rollback()
       throw e
@@ -94,9 +102,27 @@ class Scheduler implements IScheduler {
       }
 
       // Remove from queue
+      await this.queueModel.destroy({
+        where: {
+          id: model.id,
+        },
+      })
+      this.log(`Deleted mail from queue ${model.id}`, 'debug')
+
       return model
     } catch (e) {
-      logger.error(`Error sending mail to ${model.email_to}`, model)
+      logger.error(`Error sending mail to ${model.email_to}`, { model, error: e })
+      model.update(
+        {
+          last_error: JSON.stringify(e),
+          attempts: model.attempts + 1,
+        },
+        {
+          where: {
+            id: model.id,
+          },
+        }
+      )
       return model
     }
   }
@@ -107,6 +133,7 @@ class Scheduler implements IScheduler {
       to: mail.email_to,
       subject: mail.subject,
       html: mail.html,
+      attachments: mail.attachments,
     }
     return message
   }

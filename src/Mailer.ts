@@ -12,6 +12,7 @@ export default class Mailer implements IMailer {
 
   async sendMail(message: Message): Promise<SentMessageInfo> {
     const mailResult: SentMessageInfo = await this.transporter.sendMail(message)
+
     return mailResult
   }
 }
@@ -24,7 +25,8 @@ export interface Attachment {
   /** filename to be reported as the name of the attached file, use of unicode is allowed. If you do not want to use a filename, set this value as false, otherwise a filename is generated automatically */
   filename?: string | false
   /** path to a file or an URL (data uris are allowed as well) if you want to stream the file instead of including it (better for larger attachments) */
-  path: string | Url | undefined
+  path?: string | Url
+  url?: string | Url
 }
 
 export type Message = {

@@ -34,6 +34,7 @@ const queue = new NodemailerSequelizeQueue(dbCredentials, smtpCreds, {
   expression: '*/1 * * * *',
   // If -1, will try infinite times
   maxAttempts: 2,
+  logging: true,
 })
 
 //  Run cron schedule for sending mail (Only one time in root of the system)
