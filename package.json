@@ -1,6 +1,6 @@
 {
   "name": "nodemailer-sequelize-queue",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "Queue for mails with nodemailer and cron scheduler",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -21,7 +21,7 @@
     "commit:major": "npm version major --no-git-tag-version --force",
     "commit": "git add . && git commit -m ",
     "release": "npm run build && standard-version",
-    "release:publish": "git add . && npm run release && git push --follow-tags origin main && npm publish"
+    "release:publish": "git add . && npm run release && git push --follow-tags origin master && npm publish"
   },
   "repository": {
     "type": "git",
@@ -48,6 +48,7 @@
     "email"
   ],
   "devDependencies": {
+    "@types/cron": "^2.0.1",
     "@types/node": "^10.17.60",
     "@types/prettier": "2.6.0",
     "@typescript-eslint/eslint-plugin": "^5.27.1",
@@ -74,6 +75,7 @@
     "@types/nodemailer": "^6.4.5",
     "@types/readable-stream": "^2.3.14",
     "@types/winston": "^2.4.4",
+    "cron": "^2.3.0",
     "node-cron": "^3.0.2",
     "nodemailer": "^6.7.8",
     "sequelize": "^6.21.4"
