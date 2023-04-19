@@ -11,7 +11,7 @@ class Scheduler implements IScheduler {
   maxAttemps: number
   mailer: IMailer
   logging: boolean
-
+  limit: number
   private queueModel: IQueueModelStatic
 
   constructor(
@@ -19,11 +19,13 @@ class Scheduler implements IScheduler {
     queueModel: IQueueModelStatic,
     expression = '0 */1 * * *',
     maxAttemps = -1,
-    logging = false
+    logging = false,
+    limit = 100
   ) {
     if (!isCronValid(expression)) {
       throw new Error('Cron expression is invalid')
     }
+    this.limit = limit
     this.expression = expression
     this.maxAttemps = maxAttemps
     this.logging = logging
@@ -50,16 +52,6 @@ class Scheduler implements IScheduler {
       })
     })
     job.start()
-    // cron.schedule(this.expression, async () => {
-    //   // if scheduler runing
-
-    //   this.processQueueMails().catch((e) => {
-    //     logger.error('Cron failed', {
-    //       message: e.message,
-    //       stack: e.stack,
-    //     })
-    //   })
-    // })
   }
 
   private async processQueueMails(): Promise<void> {
@@ -67,6 +59,7 @@ class Scheduler implements IScheduler {
     const options: any = {
       transaction: transaction,
       lock: true,
+      limit: this.limit,
     }
     try {
       if (this.maxAttemps > 0) {

@@ -32,7 +32,7 @@ export default class NodemailerSequelizeQueue implements INodemailerSequelizeQue
         )
   }
 
-  public async initScheduler(): Promise<void> {
+  public async initScheduler({ queueLimit = 100 }: InitSchedulerProps): Promise<void> {
     if (!this.dbInisializated) {
       await this.initModels()
     }
@@ -47,7 +47,8 @@ export default class NodemailerSequelizeQueue implements INodemailerSequelizeQue
       this.queueModel,
       this.options.expression,
       this.options.maxAttempts,
-      this.options.logging
+      this.options.logging,
+      queueLimit
     )
   }
 
@@ -78,7 +79,7 @@ export default class NodemailerSequelizeQueue implements INodemailerSequelizeQue
 
 export interface INodemailerSequelizeQueue {
   queueMail(data: AddQueueModelAttributes): Promise<Model<any, any>>
-  initScheduler(): Promise<void>
+  initScheduler(props?: { queueLimit?: number }): Promise<void>
 }
 
 export type DbConfig = {
@@ -99,4 +100,8 @@ export type Options = {
   maxAttempts?: number
   expression?: string
   logging?: boolean
+}
+
+export type InitSchedulerProps = {
+  queueLimit?: number
 }
