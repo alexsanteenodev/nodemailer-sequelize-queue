@@ -1,7 +1,7 @@
 // import cron from 'node-cron'
 import { CronJob } from 'cron'
 import { Op } from 'sequelize'
-import Mailer, { IMailer, Message } from './Mailer'
+import Mailer, { IMailer } from './Mailer'
 import { IQueueModelStatic, NsqMailQueue } from './QueueModel'
 import logger from './utils/logger'
 import { generateRandom } from './utils/generateRandom'
@@ -20,7 +20,8 @@ class Scheduler implements IScheduler {
     expression = '0 */1 * * *',
     maxAttemps = -1,
     logging = false,
-    limit = 100
+    limit = 100,
+    mailer?: IMailer
   ) {
     if (!isCronValid(expression)) {
       throw new Error('Cron expression is invalid')
@@ -34,7 +35,7 @@ class Scheduler implements IScheduler {
 
     this.queueModel = queueModel
 
-    this.mailer = new Mailer(smtpCredentials)
+    this.mailer = mailer || new Mailer(smtpCredentials)
   }
 
   private async runJobs() {
@@ -88,7 +89,7 @@ class Scheduler implements IScheduler {
 
   private async sendQueuedMail(model: NsqMailQueue): Promise<NsqMailQueue> {
     try {
-      const message = this.composeMailFromModel(model)
+      const message = this.mailer.composeMailFromModel(model)
       const result = await this.mailer.sendMail(message)
       if (!result.accepted) {
         throw new Error('Error sending mail')
@@ -118,17 +119,6 @@ class Scheduler implements IScheduler {
       )
       return model
     }
-  }
-
-  private composeMailFromModel(mail: NsqMailQueue): Message {
-    const message: Message = {
-      from: mail.email_from,
-      to: mail.email_to,
-      subject: mail.subject,
-      html: mail.html,
-      attachments: mail.attachments,
-    }
-    return message
   }
 
   private log(message: string, level = 'info'): void {

@@ -1,6 +1,6 @@
 {
   "name": "nodemailer-sequelize-queue",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Queue for mails with nodemailer and cron scheduler",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -20,19 +20,19 @@
     "commit:minor": "npm version minor --no-git-tag-version --force",
     "commit:major": "npm version major --no-git-tag-version --force",
     "commit": "git add . && git commit -m ",
-    "release": "npm run build && standard-version",
+    "release": "npm run build && standard-version --commit-all",
     "release:publish": "git add . && npm run release && git push --follow-tags origin master && npm publish"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/alexchernishov/nodemailer-sequelize-queue.git"
+    "url": "git+https://github.com/alexsanteenodev/nodemailer-sequelize-queue.git"
   },
   "author": "alexsanteeno@gmail.com",
   "license": "SEE LICENSE IN LICENSE",
   "bugs": {
-    "url": "https://github.com/alexchernishov/nodemailer-sequelize-queue/issues"
+    "url": "https://github.com/alexsanteenodev/nodemailer-sequelize-queue/issues"
   },
-  "homepage": "https://github.com/alexchernishov/nodemailer-sequelize-queue#readme",
+  "homepage": "https://github.com/alexsanteenodev/nodemailer-sequelize-queue#readme",
   "keywords": [
     "sequelize",
     "nodemailer",

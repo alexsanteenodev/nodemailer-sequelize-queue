@@ -1,5 +1,6 @@
 import nodemailer, { Transporter, SentMessageInfo } from 'nodemailer'
 import { Url } from 'url'
+import { AddQueueModelAttributes, NsqMailQueue } from './QueueModel'
 
 export default class Mailer implements IMailer {
   private transporter
@@ -15,10 +16,21 @@ export default class Mailer implements IMailer {
 
     return mailResult
   }
+  composeMailFromModel(mail: NsqMailQueue | AddQueueModelAttributes): Message {
+    const message: Message = {
+      from: mail.email_from,
+      to: mail.email_to,
+      subject: mail.subject,
+      html: mail.html,
+      attachments: mail.attachments,
+    }
+    return message
+  }
 }
 
 export interface IMailer {
   sendMail(message: Message): Promise<SentMessageInfo>
+  composeMailFromModel(mail: NsqMailQueue): Message
 }
 
 export interface Attachment {

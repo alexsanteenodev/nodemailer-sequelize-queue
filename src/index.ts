@@ -1,6 +1,7 @@
 import QueueModel, { AddQueueModelAttributes, IQueueModel, IQueueModelStatic } from './QueueModel'
 import { Sequelize, Model, Dialect } from 'sequelize'
 import Scheduler from './Scheduler'
+import Mailer from './Mailer'
 
 export default class NodemailerSequelizeQueue implements INodemailerSequelizeQueue {
   private queueModel: IQueueModelStatic
@@ -9,12 +10,14 @@ export default class NodemailerSequelizeQueue implements INodemailerSequelizeQue
   private scheduled: boolean
   private smtpCredentials: any
   private options: Options
+  private mailer: Mailer
 
   constructor(dbConfigInstance: DbCongifInstance, smtpCredentials: any, options?: Options) {
     this.initDatabase(dbConfigInstance)
     this.smtpCredentials = smtpCredentials
     this.options = options
     this.scheduled = false
+    this.mailer = new Mailer(smtpCredentials)
   }
 
   private async initDatabase(dbConfigInstance: DbCongifInstance): Promise<void> {
@@ -48,7 +51,8 @@ export default class NodemailerSequelizeQueue implements INodemailerSequelizeQue
       this.options.expression,
       this.options.maxAttempts,
       this.options.logging,
-      queueLimit
+      queueLimit,
+      this.mailer
     )
   }
 
@@ -64,7 +68,20 @@ export default class NodemailerSequelizeQueue implements INodemailerSequelizeQue
     this.dbInisializated = true
   }
 
-  async queueMail(data: AddQueueModelAttributes): Promise<IQueueModel> {
+  async queueMail(data: AddQueueModelAttributes): Promise<IQueueModel | void> {
+    if (this.options.sendImmidiatly) {
+      const message = this.mailer.composeMailFromModel(data)
+      try {
+        await this.mailer.sendMail(message)
+      } catch (e) {
+        const queueEntity = await this.queueModel.create(data, {
+          returning: true,
+        })
+        return queueEntity
+      }
+      return
+    }
+
     await this.initModels()
 
     const queueEntity = await this.queueModel.create(data, {
@@ -78,7 +95,7 @@ export default class NodemailerSequelizeQueue implements INodemailerSequelizeQue
 }
 
 export interface INodemailerSequelizeQueue {
-  queueMail(data: AddQueueModelAttributes): Promise<Model<any, any>>
+  queueMail(data: AddQueueModelAttributes): Promise<Model<any, any> | void>
   initScheduler(props?: { queueLimit?: number }): Promise<void>
 }
 
@@ -100,6 +117,7 @@ export type Options = {
   maxAttempts?: number
   expression?: string
   logging?: boolean
+  sendImmidiatly?: boolean
 }
 
 export type InitSchedulerProps = {

@@ -1,14 +1,7 @@
 {
   "parser": "@typescript-eslint/parser",
-  "extends": [
-    "plugin:@typescript-eslint/recommended",
-    "plugin:prettier/recommended"
-  ],
-  "plugins": [
-    "@typescript-eslint",
-    "eslint-plugin-import",
-    "prettier"
-  ],
+  "extends": ["plugin:@typescript-eslint/recommended", "plugin:prettier/recommended"],
+  "plugins": ["@typescript-eslint", "eslint-plugin-import", "prettier"],
   "rules": {
     "prettier/prettier": "warn",
     "@typescript-eslint/ban-ts-comment": "warn",
@@ -18,20 +11,12 @@
   },
   "overrides": [
     {
-      "files": [
-        "test/**"
-      ],
-      "plugins": [
-        "jest"
-      ],
-      "extends": [
-        "plugin:jest/recommended"
-      ]
+      "files": ["test/**"],
+      "plugins": ["jest"],
+      "extends": ["plugin:jest/recommended"]
     }
   ],
-  "ignorePatterns": [
-    "src/db/migrations/*.ts"
-  ],
+  "ignorePatterns": ["src/db/migrations/*.ts"],
   "env": {
     "jest": true
   }
