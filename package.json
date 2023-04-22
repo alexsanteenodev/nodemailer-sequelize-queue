@@ -1,6 +1,6 @@
 {
   "name": "nodemailer-sequelize-queue",
-  "version": "0.0.22",
+  "version": "0.1.1",
   "description": "Queue for mails with nodemailer and cron scheduler",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
