@@ -49,6 +49,10 @@ export default (sequelize: Sequelize): IQueueModelStatic => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
+      worker_uuid: {
+        type: DataTypes.UUID,
+        allowNull: true,
+      },
     },
     {
       modelName: 'NsqMailQueue',
@@ -75,6 +79,7 @@ export type QueueModelAttributes = {
   email_to: string
   subject: string
   html: string
+  worker_uuid: string | null
   attachments?: any
   attempts?: number
   last_error?: string

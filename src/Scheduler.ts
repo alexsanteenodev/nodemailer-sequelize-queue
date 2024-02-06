@@ -1,17 +1,16 @@
 // import cron from 'node-cron'
 import { CronJob } from 'cron'
-import { Op } from 'sequelize'
-import Mailer, { IMailer } from './Mailer'
-import { IQueueModelStatic, NsqMailQueue } from './QueueModel'
+import { IQueueModelStatic } from './QueueModel'
 import logger from './utils/logger'
 import { generateRandom } from './utils/generateRandom'
+import { MailProcessor } from './MailProcessor'
 
 class Scheduler implements IScheduler {
   expression: string
   maxAttemps: number
-  mailer: IMailer
   logging: boolean
   limit: number
+  mailProcessor: MailProcessor
   private queueModel: IQueueModelStatic
 
   constructor(
@@ -21,7 +20,7 @@ class Scheduler implements IScheduler {
     maxAttemps = -1,
     logging = false,
     limit = 100,
-    mailer?: IMailer
+    mailProcessor: MailProcessor
   ) {
     if (!isCronValid(expression)) {
       throw new Error('Cron expression is invalid')
@@ -35,7 +34,7 @@ class Scheduler implements IScheduler {
 
     this.queueModel = queueModel
 
-    this.mailer = mailer || new Mailer(smtpCredentials)
+    this.mailProcessor = mailProcessor
   }
 
   private async runJobs() {
@@ -45,7 +44,7 @@ class Scheduler implements IScheduler {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this
     const job = new CronJob(this.expression, function () {
-      self.processQueueMails().catch((e) => {
+      self.mailProcessor.processQueueMails().catch((e) => {
         logger.error('Cron failed', {
           message: e.message,
           stack: e.stack,
@@ -53,72 +52,6 @@ class Scheduler implements IScheduler {
       })
     })
     job.start()
-  }
-
-  private async processQueueMails(): Promise<void> {
-    const transaction = await this.queueModel.sequelize.transaction()
-    const options: any = {
-      transaction: transaction,
-      lock: true,
-      limit: this.limit,
-    }
-    try {
-      if (this.maxAttemps > 0) {
-        options.where = {
-          attempts: {
-            [Op.lt]: this.maxAttemps,
-          },
-        }
-      }
-      const mails = await this.queueModel.findAll(options)
-      // Remove from queue(prevents duplicate sends with multiple workers)
-
-      const models = []
-      for (const mail of mails) {
-        const model = this.sendQueuedMail(mail as NsqMailQueue)
-        models.push(model)
-      }
-
-      await Promise.all(models)
-      await transaction.commit()
-    } catch (e) {
-      await transaction.rollback()
-      throw e
-    }
-  }
-
-  private async sendQueuedMail(model: NsqMailQueue): Promise<NsqMailQueue> {
-    try {
-      const message = this.mailer.composeMailFromModel(model)
-      const result = await this.mailer.sendMail(message)
-      if (!result.accepted) {
-        throw new Error('Error sending mail')
-      }
-
-      // Remove from queue
-      await this.queueModel.destroy({
-        where: {
-          id: model.id,
-        },
-      })
-      this.log(`Deleted mail from queue ${model.id}`, 'debug')
-
-      return model
-    } catch (e) {
-      logger.error(`Error sending mail to ${model.email_to}`, { model, error: e })
-      model.update(
-        {
-          last_error: JSON.stringify(e),
-          attempts: model.attempts + 1,
-        },
-        {
-          where: {
-            id: model.id,
-          },
-        }
-      )
-      return model
-    }
   }
 
   private log(message: string, level = 'info'): void {
@@ -131,8 +64,8 @@ class Scheduler implements IScheduler {
 export interface IScheduler {
   expression: string
   maxAttemps: number
-  mailer: IMailer
   logging: boolean
+  mailProcessor: MailProcessor
 }
 
 function isCronValid(freq: string): boolean {

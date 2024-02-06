@@ -2,9 +2,10 @@ import QueueModel, { AddQueueModelAttributes, IQueueModel, IQueueModelStatic } f
 import { Sequelize, Model, Dialect } from 'sequelize'
 import Scheduler from './Scheduler'
 import Mailer from './Mailer'
+import { MailProcessor } from './MailProcessor'
 
 export default class NodemailerSequelizeQueue implements INodemailerSequelizeQueue {
-  private queueModel: IQueueModelStatic
+  public queueModel: IQueueModelStatic
   private sequelize: Sequelize
   private dbInisializated: boolean
   private scheduled: boolean
@@ -44,6 +45,14 @@ export default class NodemailerSequelizeQueue implements INodemailerSequelizeQue
       return
     }
 
+    const mailProcessor = new MailProcessor(
+      this.queueModel,
+      this.mailer,
+      this.options.maxAttempts,
+      this.options.logging,
+      queueLimit
+    )
+
     this.scheduled = true
     new Scheduler(
       this.smtpCredentials,
@@ -52,11 +61,11 @@ export default class NodemailerSequelizeQueue implements INodemailerSequelizeQue
       this.options.maxAttempts,
       this.options.logging,
       queueLimit,
-      this.mailer
+      mailProcessor
     )
   }
 
-  private async initModels(): Promise<void> {
+  public async initModels(): Promise<void> {
     this.queueModel = QueueModel(this.sequelize)
 
     // Creates table if not exist
@@ -95,6 +104,7 @@ export default class NodemailerSequelizeQueue implements INodemailerSequelizeQue
 }
 
 export interface INodemailerSequelizeQueue {
+  queueModel: IQueueModelStatic
   queueMail(data: AddQueueModelAttributes): Promise<Model<any, any> | void>
   initScheduler(props?: { queueLimit?: number }): Promise<void>
 }
