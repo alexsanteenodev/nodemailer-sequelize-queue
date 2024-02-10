@@ -5,7 +5,6 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
     "eslint": "eslint --ext .ts,.js --max-warnings=0 --ignore-path .gitignore .",
     "eslint:fix": "eslint -c .eslintrc.json --fix src/**/*.{ts,js}",
@@ -21,7 +20,8 @@
     "commit:major": "npm version major --no-git-tag-version --force",
     "commit": "git add . && git commit -m ",
     "release": "npm run build && standard-version --commit-all",
-    "release:publish": "git add . && npm run release && git push --follow-tags origin master && npm publish"
+    "release:publish": "git add . && npm run release && git push --follow-tags origin master && npm publish",
+    "test": "jest"
   },
   "repository": {
     "type": "git",

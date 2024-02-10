@@ -31,6 +31,8 @@ export class MailProcessor {
     const options: any = {
       limit: this.limit,
     }
+
+    const worker_uuid = uuid()
     try {
       if (this.maxAttemps > 0) {
         options.where = {
@@ -41,7 +43,6 @@ export class MailProcessor {
       }
 
       // Lock the rows
-      const worker_uuid = uuid()
       await this.queueModel.update(
         {
           worker_uuid,
@@ -71,6 +72,17 @@ export class MailProcessor {
 
       await Promise.all(models)
     } catch (e) {
+      // reset worker_uuid
+      await this.queueModel.update(
+        {
+          worker_uuid: null,
+        },
+        {
+          where: {
+            worker_uuid,
+          },
+        }
+      )
       throw e
     }
   }

@@ -11,12 +11,14 @@ jest.mock('nodemailer')
 
 beforeAll(async () => {
   nodemailerSequelizeQueue = await initNodeMailer()
+})
+beforeEach(async () => {
   // @ts-expect-error - mocking nodemailer
   nodemailer.createTransport.mockClear()
 })
 
 afterAll(async () => {
-  await nodemailerSequelizeQueue.queueModel.sequelize.close()
+  await nodemailerSequelizeQueue?.queueModel?.sequelize?.close()
 })
 
 describe('QueueMail', () => {
@@ -98,7 +100,7 @@ describe('QueueMail', () => {
 
     // expect sendMail to be called twice
     expect(mockedSendMail).toHaveBeenCalledTimes(2)
-    expect(nodemailer.createTransport).toHaveBeenCalledTimes(4)
+    expect(nodemailer.createTransport).toHaveBeenCalledTimes(2)
 
     expect(mockedSendMail).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -10,7 +10,7 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  await nodemailerSequelizeQueue.queueModel.sequelize.close()
+  await nodemailerSequelizeQueue?.queueModel?.sequelize?.close()
 })
 
 describe('QueueMail', () => {
